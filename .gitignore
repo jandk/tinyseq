@@ -2,6 +2,5 @@
 target/
 
 # IntelliJ
-.idea/*
-!.idea/codeStyles
+.idea/
 *.iml
