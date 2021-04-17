@@ -16,6 +16,10 @@ public interface Seq<T> extends Iterable<T> {
     }
 
 
+    //
+    // Intermediate operations
+    //
+
     default Seq<T> filter(Predicate<? super T> predicate) {
         Objects.requireNonNull(predicate, "predicate");
 
@@ -42,6 +46,67 @@ public interface Seq<T> extends Iterable<T> {
     }
 
 
+    //
+    // Terminal operations
+    //
+
+
+    default boolean all(Predicate<? super T> predicate) {
+        for (T element : this) {
+            if (!predicate.test(element)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    default boolean any(Predicate<? super T> predicate) {
+        for (T element : this) {
+            if (predicate.test(element)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    default boolean none(Predicate<? super T> predicate) {
+        for (T element : this) {
+            if (predicate.test(element)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    default int count() {
+        int count = 0;
+        for (T ignored : this) {
+            count++;
+        }
+        return count;
+    }
+
+
+    default T first() {
+        return nonEmptyIterator().next();
+    }
+
+    default T last() {
+        Iterator<T> iterator = nonEmptyIterator();
+
+        T last = iterator.next();
+        while (iterator.hasNext()) {
+            last = iterator.next();
+        }
+        return last;
+    }
+
+
+    //
+    // toCollection/toMap
+    //
+
     default <C extends Collection<? super T>> C toCollection(C destination) {
         Objects.requireNonNull(destination, "destination");
 
@@ -58,6 +123,19 @@ public interface Seq<T> extends Iterable<T> {
 
     default Set<T> toSet() {
         return toCollection(new HashSet<>());
+    }
+
+
+    //
+    // Helpers
+    //
+
+    default Iterator<T> nonEmptyIterator() {
+        Iterator<T> iterator = iterator();
+        if (!iterator.hasNext()) {
+            throw new NoSuchElementException("Empty seq");
+        }
+        return iterator;
     }
 
 }
