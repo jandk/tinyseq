@@ -1,8 +1,7 @@
 package be.twofold.tinyseq;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 @FunctionalInterface
 public interface Seq<T> extends Iterable<T> {
@@ -16,24 +15,20 @@ public interface Seq<T> extends Iterable<T> {
     }
 
 
-    //
-    // Intermediate operations
-    //
-
     default Seq<T> filter(Predicate<? super T> predicate) {
-        Objects.requireNonNull(predicate, "predicate");
+        Objects.requireNonNull(predicate, "predicate is null");
 
         return () -> new FilterItr<>(iterator(), predicate);
     }
 
-    default <R> Seq<R> flatMap(Function<? super T, ? extends Seq<? extends R>> mapper) {
-        Objects.requireNonNull(mapper, "mapper");
+    default <R> Seq<R> flatMap(Function<? super T, ? extends Iterable<? extends R>> mapper) {
+        Objects.requireNonNull(mapper, "mapper is null");
 
         return () -> new FlatMapItr<>(iterator(), mapper);
     }
 
     default <R> Seq<R> map(Function<? super T, ? extends R> mapper) {
-        Objects.requireNonNull(mapper, "mapper");
+        Objects.requireNonNull(mapper, "mapper is null");
 
         return () -> new MapItr<>(iterator(), mapper);
     }
@@ -45,20 +40,6 @@ public interface Seq<T> extends Iterable<T> {
         return new OnceSeq<>(this);
     }
 
-
-    //
-    // Terminal operations
-    //
-
-
-    default boolean all(Predicate<? super T> predicate) {
-        for (T element : this) {
-            if (!predicate.test(element)) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     default boolean any(Predicate<? super T> predicate) {
         for (T element : this) {
@@ -72,6 +53,15 @@ public interface Seq<T> extends Iterable<T> {
     default boolean none(Predicate<? super T> predicate) {
         for (T element : this) {
             if (predicate.test(element)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    default boolean all(Predicate<? super T> predicate) {
+        for (T element : this) {
+            if (!predicate.test(element)) {
                 return false;
             }
         }
@@ -108,7 +98,7 @@ public interface Seq<T> extends Iterable<T> {
     //
 
     default <C extends Collection<? super T>> C toCollection(C destination) {
-        Objects.requireNonNull(destination, "destination");
+        Objects.requireNonNull(destination, "destination is null");
 
         for (T element : this) {
             destination.add(element);

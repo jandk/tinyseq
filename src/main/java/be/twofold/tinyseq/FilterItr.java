@@ -1,8 +1,7 @@
 package be.twofold.tinyseq;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.function.Predicate;
+import java.util.*;
+import java.util.function.*;
 
 final class FilterItr<E> implements Iterator<E> {
     private final Iterator<E> iterator;
@@ -11,12 +10,12 @@ final class FilterItr<E> implements Iterator<E> {
     private E next;
 
     FilterItr(Iterator<E> iterator, Predicate<? super E> predicate) {
-        this.iterator = iterator;
-        this.predicate = predicate;
+        this.iterator = Objects.requireNonNull(iterator, "iterator is null");
+        this.predicate = Objects.requireNonNull(predicate, "predicate is null");
     }
 
     @Override
-    public final boolean hasNext() {
+    public boolean hasNext() {
         if (state == 0) {
             while (iterator.hasNext()) {
                 E element = iterator.next();
@@ -34,7 +33,7 @@ final class FilterItr<E> implements Iterator<E> {
     }
 
     @Override
-    public final E next() {
+    public E next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
@@ -44,5 +43,4 @@ final class FilterItr<E> implements Iterator<E> {
         next = null;
         return result;
     }
-
 }

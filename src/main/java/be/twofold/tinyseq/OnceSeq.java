@@ -1,12 +1,14 @@
 package be.twofold.tinyseq;
 
-import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.*;
+import java.util.concurrent.atomic.*;
 
 final class OnceSeq<T> implements Seq<T> {
     private final AtomicReference<Seq<T>> reference;
 
     OnceSeq(Seq<T> seq) {
+        Objects.requireNonNull(seq, "seq is null");
+
         reference = new AtomicReference<>(seq);
     }
 

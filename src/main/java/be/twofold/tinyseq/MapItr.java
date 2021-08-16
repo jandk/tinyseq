@@ -1,15 +1,15 @@
 package be.twofold.tinyseq;
 
-import java.util.Iterator;
-import java.util.function.Function;
+import java.util.*;
+import java.util.function.*;
 
 final class MapItr<E, R> implements Iterator<R> {
     private final Iterator<E> iterator;
     private final Function<? super E, ? extends R> mapper;
 
     MapItr(Iterator<E> iterator, Function<? super E, ? extends R> mapper) {
-        this.iterator = iterator;
-        this.mapper = mapper;
+        this.iterator = Objects.requireNonNull(iterator, "iterator is null");
+        this.mapper = Objects.requireNonNull(mapper, "mapper is null");
     }
 
     @Override
