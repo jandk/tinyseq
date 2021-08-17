@@ -9,6 +9,10 @@ import static be.twofold.tinyseq.SeqHelper.*;
 @FunctionalInterface
 public interface Seq<T> extends Iterable<T> {
 
+    static <T> Seq<T> empty() {
+        return Collections::emptyIterator;
+    }
+
     static <T> Seq<T> seq(Iterable<T> iterable) {
         return iterable::iterator;
     }
@@ -40,10 +44,24 @@ public interface Seq<T> extends Iterable<T> {
         return () -> new FilterItr<>(iterator(), predicate);
     }
 
+    default Seq<T> filterIndexed(BiPredicate<Integer, ? super T> predicate) {
+        Objects.requireNonNull(predicate, "predicate is null");
+
+        AtomicInteger index = new AtomicInteger();
+        return filter(t -> predicate.test(index.getAndIncrement(), t));
+    }
+
     default <R> Seq<R> flatMap(Function<? super T, ? extends Iterable<? extends R>> mapper) {
         Objects.requireNonNull(mapper, "mapper is null");
 
         return () -> new FlatMapItr<>(iterator(), mapper);
+    }
+
+    default <R> Seq<R> flatMap(BiFunction<Integer, ? super T, ? extends Iterable<? extends R>> mapper) {
+        Objects.requireNonNull(mapper, "mapper is null");
+
+        AtomicInteger index = new AtomicInteger();
+        return flatMap(t -> mapper.apply(index.getAndIncrement(), t));
     }
 
     default <R> Seq<R> map(Function<? super T, ? extends R> mapper) {
