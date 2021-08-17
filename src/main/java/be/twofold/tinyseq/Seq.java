@@ -17,10 +17,22 @@ public interface Seq<T> extends Iterable<T> {
         return ((Seq<T>) () -> iterator).once();
     }
 
+    @SafeVarargs
     static <T> Seq<T> of(T... elements) {
         return seq(Arrays.asList(elements));
     }
 
+    // region drop/take
+
+    default Seq<T> drop(int count) {
+        return () -> new DropItr<>(iterator(), count);
+    }
+
+    default Seq<T> take(int count) {
+        return () -> new TakeItr<>(iterator(), count);
+    }
+
+    // endregion
 
     default Seq<T> filter(Predicate<? super T> predicate) {
         Objects.requireNonNull(predicate, "predicate is null");
