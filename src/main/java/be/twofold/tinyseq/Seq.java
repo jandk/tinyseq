@@ -9,6 +9,8 @@ import static be.twofold.tinyseq.SeqHelper.*;
 @FunctionalInterface
 public interface Seq<T> extends Iterable<T> {
 
+    // region Factory Methods
+
     static <T> Seq<T> empty() {
         return Collections::emptyIterator;
     }
@@ -26,17 +28,17 @@ public interface Seq<T> extends Iterable<T> {
         return seq(Arrays.asList(elements));
     }
 
-    // region drop/take
+    // endregion
+
+    // region Intermediate Operations
+
+    default Seq<T> distinct() {
+        return () -> new DistinctItr<>(iterator());
+    }
 
     default Seq<T> drop(int count) {
         return () -> new DropItr<>(iterator(), count);
     }
-
-    default Seq<T> take(int count) {
-        return () -> new TakeItr<>(iterator(), count);
-    }
-
-    // endregion
 
     default Seq<T> filter(Predicate<? super T> predicate) {
         Objects.requireNonNull(predicate, "predicate is null");
@@ -57,7 +59,7 @@ public interface Seq<T> extends Iterable<T> {
         return () -> new FlatMapItr<>(iterator(), mapper);
     }
 
-    default <R> Seq<R> flatMap(BiFunction<Integer, ? super T, ? extends Iterable<? extends R>> mapper) {
+    default <R> Seq<R> flatMapIndexed(BiFunction<Integer, ? super T, ? extends Iterable<? extends R>> mapper) {
         Objects.requireNonNull(mapper, "mapper is null");
 
         AtomicInteger index = new AtomicInteger();
@@ -77,12 +79,52 @@ public interface Seq<T> extends Iterable<T> {
         return map(t -> mapper.apply(index.getAndIncrement(), t));
     }
 
+    default Seq<T> onEach(Consumer<? super T> action) {
+        Objects.requireNonNull(action, "action is null");
+
+        return map(element -> {
+            action.accept(element);
+            return element;
+        });
+    }
+
+    default Seq<T> onEachIndexed(BiConsumer<Integer, ? super T> action) {
+        Objects.requireNonNull(action, "action is null");
+
+        AtomicInteger index = new AtomicInteger();
+        return map(element -> {
+            action.accept(index.getAndIncrement(), element);
+            return element;
+        });
+    }
+
     default Seq<T> once() {
         if (this instanceof OnceSeq) {
             return this;
         }
         return new OnceSeq<>(this);
     }
+
+    @SuppressWarnings("unchecked")
+    default Seq<T> sorted() {
+        return sorted((Comparator<? super T>) Comparator.naturalOrder());
+    }
+
+    default Seq<T> sorted(Comparator<? super T> comparator) {
+        Objects.requireNonNull(comparator, "comparator is null");
+
+        return () -> {
+            List<T> list = toList();
+            list.sort(comparator);
+            return list.iterator();
+        };
+    }
+
+    default Seq<T> take(int count) {
+        return () -> new TakeItr<>(iterator(), count);
+    }
+
+    // endregion
 
 
     default boolean any(Predicate<? super T> predicate) {
@@ -340,6 +382,31 @@ public interface Seq<T> extends Iterable<T> {
 
     default Set<T> toSet() {
         return toCollection(new HashSet<>());
+    }
+
+    default List<T> toUnmodifiableList() {
+        ArrayList<T> list = toCollection(new ArrayList<>());
+        switch (list.size()) {
+            case 0:
+                return Collections.emptyList();
+            case 1:
+                return Collections.singletonList(list.get(0));
+            default:
+                list.trimToSize();
+                return Collections.unmodifiableList(list);
+        }
+    }
+
+    default Set<T> toUnmodifiableSet() {
+        Set<T> set = toCollection(new HashSet<>());
+        switch (set.size()) {
+            case 0:
+                return Collections.emptySet();
+            case 1:
+                return Collections.singleton(set.iterator().next());
+            default:
+                return Collections.unmodifiableSet(set);
+        }
     }
 
     // endregion
